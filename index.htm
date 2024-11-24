@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bluesky Search Watch</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Google Fonts for modern design -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        /* Basic styles */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f0f2f5, #dfe9f3);
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+
+        /* Header styles */
+        header {
+            background: linear-gradient(135deg, #1DA1F2, #0d8de5);
+            padding: 20px;
+            text-align: center;
+            color: #fff;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2em;
+            font-weight: 600;
+        }
+
+        /* Container styles */
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        /* Collapsible styles */
+        .collapsible {
+            background-color: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .collapsible-header {
+            padding: 15px 20px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1.2em;
+            background: #1DA1F2;
+            color: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .collapsible-content {
+            padding: 20px;
+            display: none;
+        }
+
+        .collapsible.expanded .collapsible-content {
+            display: block;
+        }
+
+        /* Form styles */
+        form label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        form input[type="text"],
+        form input[type="number"],
+        form select {
+            width: 100%;
+            max-width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1em;
+            box-sizing: border-box;
+        }
+
+        /* Large Watch button */
+        form button {
+            background: linear-gradient(135deg, #1DA1F2, #0d8de5);
+            color: #fff;
+            padding: 15px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1.2em;
+            width: 100%;
+            font-weight: bold;
+            transition: background 0.3s ease;
+        }
+
+        form button:hover {
+            background: linear-gradient(135deg, #0d8de5, #1DA1F2);
+        }
+
+        /* Stop Watching button */
+        #stopButton {
+            margin-top: 20px;
+            background: linear-gradient(135deg, #e0245e, #c81c4a);
+            color: #fff;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1em;
+            width: 100%;
+            font-weight: bold;
+            transition: background 0.3s ease;
+            display: none; /* Initially hidden */
+        }
+
+        #stopButton:hover {
+            background: linear-gradient(135deg, #c81c4a, #e0245e);
+        }
+
+        /* Posts styles */
+        #posts {
+            margin-top: 40px;
+        }
+
+        .post {
+            background-color: #fff;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            position: relative;
+            animation: fadeInUp 0.5s;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .post:hover {
+            transform: translateY(-5px);
+        }
+
+        .post.old {
+            opacity: 0.8;
+        }
+
+        .post.new {
+            border-left: 5px solid #1DA1F2;
+            background-color: #e8f5fd;
+        }
+
+        .post.new::before {
+            content: 'NEW';
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #1DA1F2;
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 50px;
+            font-size: 0.8em;
+            font-weight: bold;
+            animation: glow 1.5s infinite;
+        }
+
+        @keyframes glow {
+            0% { box-shadow: 0 0 5px #1DA1F2; }
+            50% { box-shadow: 0 0 15px #1DA1F2; }
+            100% { box-shadow: 0 0 5px #1DA1F2; }
+        }
+
+        .post h2 {
+            margin-top: 0;
+            font-size: 1.5em;
+        }
+
+        .post p {
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+
+        .post .meta {
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        .post a {
+            color: #1DA1F2;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .post a:hover {
+            text-decoration: underline;
+        }
+
+        /* Displaying watched query */
+        #watching {
+            margin-top: 20px;
+            font-size: 1.2em;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Error messages */
+        .error {
+            color: red;
+            text-align: center;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8em;
+            }
+
+            .container {
+                margin: 20px auto;
+                padding: 0 15px;
+            }
+
+            form button {
+                padding: 12px;
+                font-size: 1.1em;
+            }
+
+            #stopButton {
+                padding: 10px;
+                font-size: 1em;
+            }
+
+            .post h2 {
+                font-size: 1.3em;
+            }
+
+            #watching {
+                font-size: 1.1em;
+            }
+        }
+
+        @media (max-width: 480px) {
+            header h1 {
+                font-size: 1.5em;
+            }
+
+            form label {
+                font-size: 0.9em;
+            }
+
+            form input[type="text"],
+            form input[type="number"],
+            form select {
+                font-size: 0.9em;
+                padding: 10px;
+            }
+
+            form button {
+                padding: 10px;
+                font-size: 1em;
+            }
+
+            #stopButton {
+                padding: 8px;
+                font-size: 0.9em;
+            }
+
+            .post h2 {
+                font-size: 1.1em;
+            }
+
+            .post {
+                padding: 15px;
+            }
+
+            #watching {
+                font-size: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Bluesky Search Watch</h1>
+</header>
+
+<div class="container">
+    <!-- Collapsible Form Section -->
+    <div class="collapsible expanded" id="collapsibleForm">
+        <div class="collapsible-header" id="collapsibleHeader">
+            Settings
+            <span id="collapsibleToggle">▲</span>
+        </div>
+        <div class="collapsible-content">
+            <form id="searchForm">
+                <label for="searchQuery">Search Query:</label>
+                <input type="text" id="searchQuery" name="searchQuery" placeholder="Enter your search term" required>
+
+                <label for="language">Language:</label>
+                <select id="language" name="language">
+                    <option value="">All</option>
+                    <!-- Comprehensive list of languages based on ISO 639-1 -->
+                    <option value="aa">Afar</option>
+                    <option value="ab">Abkhazian</option>
+                    <option value="ae">Avestan</option>
+                    <option value="af">Afrikaans</option>
+                    <option value="ak">Akan</option>
+                    <option value="am">Amharic</option>
+                    <option value="an">Aragonese</option>
+                    <option value="ar">Arabic</option>
+                    <option value="as">Assamese</option>
+                    <option value="av">Avaric</option>
+                    <option value="ay">Aymara</option>
+                    <option value="az">Azerbaijani</option>
+                    <option value="ba">Bashkir</option>
+                    <option value="be">Belarusian</option>
+                    <option value="bg">Bulgarian</option>
+                    <option value="bh">Bihari languages</option>
+                    <option value="bi">Bislama</option>
+                    <option value="bm">Bambara</option>
+                    <option value="bn">Bengali</option>
+                    <option value="bo">Tibetan</option>
+                    <option value="br">Breton</option>
+                    <option value="bs">Bosnian</option>
+                    <option value="ca">Catalan; Valencian</option>
+                    <option value="ce">Chechen</option>
+                    <option value="ch">Chamorro</option>
+                    <option value="co">Corsican</option>
+                    <option value="cr">Cree</option>
+                    <option value="cs">Czech</option>
+                    <option value="cu">Church Slavic; Old Slavonic; Church Slavonic; Old Bulgarian; Old Church Slavonic</option>
+                    <option value="cv">Chuvash</option>
+                    <option value="cy">Welsh</option>
+                    <option value="da">Danish</option>
+                    <option value="de">German</option>
+                    <option value="dv">Divehi; Dhivehi; Maldivian</option>
+                    <option value="dz">Dzongkha</option>
+                    <option value="ee">Ewe</option>
+                    <option value="el">Greek, Modern (1453-)</option>
+                    <option value="en">English</option>
+                    <option value="eo">Esperanto</option>
+                    <option value="es">Spanish; Castilian</option>
+                    <option value="et">Estonian</option>
+                    <option value="eu">Basque</option>
+                    <option value="fa">Persian</option>
+                    <option value="ff">Fulah</option>
+                    <option value="fi">Finnish</option>
+                    <option value="fj">Fijian</option>
+                    <option value="fo">Faroese</option>
+                    <option value="fr">French</option>
+                    <option value="fy">Western Frisian</option>
+                    <option value="ga">Irish</option>
+                    <option value="gd">Scottish Gaelic; Gaelic</option>
+                    <option value="gl">Galician</option>
+                    <option value="gn">Guarani</option>
+                    <option value="gu">Gujarati</option>
+                    <option value="gv">Manx</option>
+                    <option value="ha">Hausa</option>
+                    <option value="he">Hebrew</option>
+                    <option value="hi">Hindi</option>
+                    <option value="ho">Hiri Motu</option>
+                    <option value="hr">Croatian</option>
+                    <option value="ht">Haitian; Haitian Creole</option>
+                    <option value="hu">Hungarian</option>
+                    <option value="hy">Armenian</option>
+                    <option value="hz">Herero</option>
+                    <option value="ia">Interlingua (International Auxiliary Language Association)</option>
+                    <option value="id">Indonesian</option>
+                    <option value="ie">Interlingue; Occidental</option>
+                    <option value="ig">Igbo</option>
+                    <option value="ii">Sichuan Yi; Nuosu</option>
+                    <option value="ik">Inupiaq</option>
+                    <option value="io">Ido</option>
+                    <option value="is">Icelandic</option>
+                    <option value="it">Italian</option>
+                    <option value="iu">Inuktitut</option>
+                    <option value="ja">Japanese</option>
+                    <option value="jv">Javanese</option>
+                    <option value="ka">Georgian</option>
+                    <option value="kg">Kongo</option>
+                    <option value="ki">Kikuyu; Gikuyu</option>
+                    <option value="kj">Kuanyama; Kwanyama</option>
+                    <option value="kk">Kazakh</option>
+                    <option value="kl">Kalaallisut; Greenlandic</option>
+                    <option value="km">Central Khmer</option>
+                    <option value="kn">Kannada</option>
+                    <option value="ko">Korean</option>
+                    <option value="kr">Kanuri</option>
+                    <option value="ks">Kashmiri</option>
+                    <option value="ku">Kurdish</option>
+                    <option value="kv">Komi</option>
+                    <option value="kw">Cornish</option>
+                    <option value="ky">Kirghiz; Kyrgyz</option>
+                    <option value="la">Latin</option>
+                    <option value="lb">Luxembourgish; Letzeburgesch</option>
+                    <option value="lg">Ganda</option>
+                    <option value="li">Limburgan; Limburger; Limburgish</option>
+                    <option value="ln">Lingala</option>
+                    <option value="lo">Lao</option>
+                    <option value="lt">Lithuanian</option>
+                    <option value="lu">Luba-Katanga</option>
+                    <option value="lv">Latvian</option>
+                    <option value="mg">Malagasy</option>
+                    <option value="mh">Marshallese</option>
+                    <option value="mi">Maori</option>
+                    <option value="mk">Macedonian</option>
+                    <option value="ml">Malayalam</option>
+                    <option value="mn">Mongolian</option>
+                    <option value="mr">Marathi</option>
+                    <option value="ms">Malay</option>
+                    <option value="mt">Maltese</option>
+                    <option value="my">Burmese</option>
+                    <option value="na">Nauru</option>
+                    <option value="nb">Bokmål, Norwegian; Norwegian Bokmål</option>
+                    <option value="nd">North Ndebele</option>
+                    <option value="ne">Nepali</option>
+                    <option value="ng">Ndonga</option>
+                    <option value="nl">Dutch; Flemish</option>
+                    <option value="nn">Nynorsk, Norwegian; Norwegian Nynorsk</option>
+                    <option value="no">Norwegian</option>
+                    <option value="nr">South Ndebele</option>
+                    <option value="nv">Navajo; Navaho</option>
+                    <option value="ny">Chichewa; Chewa; Nyanja</option>
+                    <option value="oc">Occitan (post 1500)</option>
+                    <option value="oj">Ojibwa</option>
+                    <option value="om">Oromo</option>
+                    <option value="or">Oriya</option>
+                    <option value="os">Ossetian; Ossetic</option>
+                    <option value="pa">Panjabi; Punjabi</option>
+                    <option value="pi">Pali</option>
+                    <option value="pl">Polish</option>
+                    <option value="ps">Pushto; Pashto</option>
+                    <option value="pt">Portuguese</option>
+                    <option value="qu">Quechua</option>
+                    <option value="rm">Romansh</option>
+                    <option value="rn">Rundi</option>
+                    <option value="ro">Romanian; Moldavian; Moldovan</option>
+                    <option value="ru">Russian</option>
+                    <option value="rw">Kinyarwanda</option>
+                    <option value="sa">Sanskrit</option>
+                    <option value="sc">Sardinian</option>
+                    <option value="sd">Sindhi</option>
+                    <option value="se">Northern Sami</option>
+                    <option value="sg">Sango</option>
+                    <option value="si">Sinhala; Sinhalese</option>
+                    <option value="sk">Slovak</option>
+                    <option value="sl">Slovenian</option>
+                    <option value="sm">Samoan</option>
+                    <option value="sn">Shona</option>
+                    <option value="so">Somali</option>
+                    <option value="sq">Albanian</option>
+                    <option value="sr">Serbian</option>
+                    <option value="ss">Swati</option>
+                    <option value="st">Southern Sotho</option>
+                    <option value="su">Sundanese</option>
+                    <option value="sv">Swedish</option>
+                    <option value="sw">Swahili</option>
+                    <option value="ta">Tamil</option>
+                    <option value="te">Telugu</option>
+                    <option value="tg">Tajik</option>
+                    <option value="th">Thai</option>
+                    <option value="ti">Tigrinya</option>
+                    <option value="tk">Turkmen</option>
+                    <option value="tl">Tagalog</option>
+                    <option value="tn">Tswana</option>
+                    <option value="to">Tonga (Tonga Islands)</option>
+                    <option value="tr">Turkish</option>
+                    <option value="ts">Tsonga</option>
+                    <option value="tt">Tatar</option>
+                    <option value="tw">Twi</option>
+                    <option value="ty">Tahitian</option>
+                    <option value="ug">Uighur; Uyghur</option>
+                    <option value="uk">Ukrainian</option>
+                    <option value="ur">Urdu</option>
+                    <option value="uz">Uzbek</option>
+                    <option value="ve">Venda</option>
+                    <option value="vi">Vietnamese</option>
+                    <option value="vo">Volapük</option>
+                    <option value="wa">Walloon</option>
+                    <option value="wo">Wolof</option>
+                    <option value="xh">Xhosa</option>
+                    <option value="yi">Yiddish</option>
+                    <option value="yo">Yoruba</option>
+                    <option value="za">Zhuang; Chuang</option>
+                    <option value="zh">Chinese</option>
+                    <option value="zu">Zulu</option>
+                </select>
+
+                <label for="interval">Refresh Interval (seconds):</label>
+                <input type="number" id="interval" name="interval" value="30" min="5" required>
+
+                <button type="submit">Watch</button>
+            </form>
+        </div>
+
+        <!-- Stop Watching Button -->
+        <button id="stopButton">Stop Watching</button>
+
+        <!-- Watched Query Display -->
+        <div id="watching"></div>
+
+        <!-- Posts Container -->
+        <div id="posts"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById('searchForm');
+        const postsDiv = document.getElementById('posts');
+        const watchingDiv = document.getElementById('watching');
+        const stopButton = document.getElementById('stopButton');
+        const collapsibleForm = document.getElementById('collapsibleForm');
+        const collapsibleHeader = document.getElementById('collapsibleHeader');
+        const collapsibleToggle = document.getElementById('collapsibleToggle');
+
+        let timer = null;
+        let previousPosts = [];
+        let isWatching = false;
+
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+            clearInterval(timer);
+            fetchAndDisplayPosts();
+            const interval = parseInt(document.getElementById('interval').value) * 1000;
+            timer = setInterval(fetchAndDisplayPosts, interval);
+
+            // Collapse the form
+            collapsibleForm.classList.remove('expanded');
+            collapsibleForm.classList.add('collapsed');
+            collapsibleToggle.textContent = '▼';
+
+            isWatching = true;
+            updateWatchingDisplay();
+
+            // Show Stop Watching button
+            stopButton.style.display = 'block';
+        });
+
+        collapsibleHeader.addEventListener('click', function() {
+            if (collapsibleForm.classList.contains('collapsed')) {
+                // Expand the collapsible
+                collapsibleForm.classList.remove('collapsed');
+                collapsibleForm.classList.add('expanded');
+                collapsibleToggle.textContent = '▲';
+
+                // If watching is active, stop watching
+                if (isWatching) {
+                    resetWatch();
+                }
+            } else {
+                // Collapse the collapsible
+                collapsibleForm.classList.remove('expanded');
+                collapsibleForm.classList.add('collapsed');
+                collapsibleToggle.textContent = '▼';
+            }
+        });
+
+        stopButton.addEventListener('click', function() {
+            resetWatch();
+            // Expand the collapsible when stopping
+            collapsibleForm.classList.remove('collapsed');
+            collapsibleForm.classList.add('expanded');
+            collapsibleToggle.textContent = '▲';
+        });
+
+        function updateWatchingDisplay() {
+            if (isWatching) {
+                const searchQueryInput = document.getElementById('searchQuery').value.trim();
+                watchingDiv.textContent = `Watching query: "${searchQueryInput}"`;
+            } else {
+                watchingDiv.textContent = '';
+            }
+        }
+
+        function fetchAndDisplayPosts() {
+            const searchQueryInput = document.getElementById('searchQuery').value.trim();
+            const language = document.getElementById('language').value;
+
+            // Sanitize the input by allowing letters (from any language), numbers, whitespace, and #, +, -, _
+            let sanitizedQuery = searchQueryInput.replace(/[^\p{L}\p{N}\s#+\-_]/gu, '');
+
+            // URL-encode the sanitized query
+            let encodedQuery = encodeURIComponent(sanitizedQuery);
+
+            // Construct the API URL with the encoded query
+            // Added &limit=25 to ensure we get 25 posts
+            let url = `https://public.api.bsky.app/xrpc/app.bsky.feed.searchPosts?q=${encodedQuery}&limit=25`;
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.posts) {
+                        displayPosts(data.posts, language);
+                    } else {
+                        postsDiv.innerHTML = `<p class="error">No posts found for the query.</p>`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching data:', error);
+                    postsDiv.innerHTML = `<p class="error">Error fetching data. Please try again later.</p>`;
+                });
+        }
+
+        function displayPosts(posts, languageFilter) {
+            const newPostsDiv = document.createElement('div');
+            let currentPostURIs = [];
+
+            posts.forEach(post => {
+                const record = post.record;
+                const author = post.author;
+
+                // Apply language filter
+                if (languageFilter && record.langs && !record.langs.includes(languageFilter)) {
+                    return;
+                }
+
+                // Check if post was already in previous interval
+                const isOld = previousPosts.includes(post.uri);
+                currentPostURIs.push(post.uri);
+
+                // Format creation date
+                const date = new Date(record.createdAt);
+                const formattedDate = date.toLocaleString();
+
+                // Safely display post text
+                const text = sanitizeText(record.text);
+
+                // Create link to original post
+                const postLink = document.createElement('a');
+                const postId = post.uri.split('/').pop();
+                postLink.href = `https://bsky.app/profile/${author.handle}/post/${postId}`;
+                postLink.target = '_blank';
+                postLink.rel = 'noopener noreferrer';
+                postLink.textContent = `View original post`;
+
+                // Create post element
+                const postDiv = document.createElement('div');
+                postDiv.className = 'post';
+                if (isOld) {
+                    postDiv.classList.add('old');
+                } else {
+                    postDiv.classList.add('new');
+                }
+
+                // Assemble post
+                postDiv.innerHTML = `
+                    <h2>${sanitizeText(author.displayName)} (@${sanitizeText(author.handle)})</h2>
+                    <p>${text}</p>
+                    <p class="meta">Created at: ${formattedDate}</p>
+                `;
+                postDiv.appendChild(postLink);
+                newPostsDiv.appendChild(postDiv);
+            });
+
+            // Update posts
+            postsDiv.innerHTML = '';
+            postsDiv.appendChild(newPostsDiv);
+
+            // Save current posts
+            previousPosts = currentPostURIs;
+        }
+
+        function sanitizeText(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function resetWatch() {
+            clearInterval(timer);
+            previousPosts = [];
+            isWatching = false;
+            updateWatchingDisplay();
+
+            // Hide Stop Watching button
+            stopButton.style.display = 'none';
+
+            // Clear posts
+            postsDiv.innerHTML = '';
+        }
+    </script>
+
+</body>
+</html>
